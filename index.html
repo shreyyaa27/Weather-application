@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <style>
+      .container {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      #days {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        box-shadow: rgba(50, 50, 93, 0.25) 0px 50px 100px -20px,
+          rgba(0, 0, 0, 0.3) 0px 30px 60px -30px,
+          rgba(10, 37, 64, 0.35) 0px -2px 6px 0px inset;
+      }
+
+      #cont {
+        border: 1px solid black;
+        height: 300px;
+        width: 200px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px,
+          rgb(51, 51, 51) 0px 0px 0px 3px;
+        margin-top: 50px;
+
+        padding: 20px;
+      }
+
+      body {
+        background-repeat: no-repeat;
+        background-size: cover;
+        overflow-x: hidden;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <input type="text" id="city" placeholder="Enter City Name" />
+
+    <button onclick="weatherData()">Search</button>
+
+    <div class="container">
+      <div id="cont"></div>
+      <div id="map"></div>
+    </div>
+
+    <div id="days"></div>
+  </body>
+</html>
+
+<script>
+  function weatherData() {
+    let city = document.getElementById("city").value;
+    let url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=b711fa2da92fd8f3924936e05e9a9ee1&units=metric`;
+
+    async function getWeather() {
+      try {
+        let res = await fetch(url);
+        let data = await res.json();
+
+        showWeather(data);
+
+        console.log(data);
+      } catch (err) {
+        console.log(err);
+      }
+    }
+
+    getWeather();
+
+    function showWeather(weather) {
+      document.getElementById("cont").innerHTML = "";
+      document.getElementById("map").innerHTML = "";
+
+      let temp = document.createElement("p");
+      temp.innerText = `Temperature: ${weather.main.temp}°`;
+
+      let maxtemp = document.createElement("p");
+      maxtemp.innerText = `Max_Temperature: ${weather.main.temp_max}°`;
+
+      let mintemp = document.createElement("p");
+      mintemp.innerText = `Min_Tempertaure: ${weather.main.temp_min}°`;
+
+      let wind = document.createElement("p");
+      wind.innerText = `Wind speed: ${weather.wind.speed}Km/h`;
+
+      let clouds = document.createElement("p");
+      clouds.innerText = `Clouds : ${weather.clouds.all}`;
+
+      //Now converting sec to day and setting local time
+
+      var sec = weather.sys.sunrise;
+      var date = new Date(sec * 1000);
+      var timestr = date.toLocaleTimeString();
+
+      let sunrise = document.createElement("p");
+      sunrise.innerText = `Sunrise: ${timestr}`;
+
+      var sec1 = weather.sys.sunset;
+      var date1 = new Date(sec1 * 1000);
+      var time = date1.toLocaleTimeString();
+
+      let sunset = document.createElement("p");
+      sunset.innerText = `Sunset: ${time}`;
+
+      document
+        .getElementById("cont")
+        .append(temp, maxtemp, mintemp, wind, clouds, sunrise, sunset);
+
+      document.getElementById("map").innerHTML = `<iframe
+          width="600"
+          height="500"
+          id="gmap_canvas"
+          src="https://maps.google.com/maps?q=${city}&t=&z=13&ie=UTF8&iwloc=&output=embed"
+          frameborder="0"
+          scrolling="no"
+          marginheight="0"
+          marginwidth="0"
+        ></iframe
+        >`;
+
+      async function daysWeather() {
+        try {
+          let response = await fetch(
+            `https://api.openweathermap.org/data/2.5/onecall?lat=${weather.coord.lat}&lon=${weather.coord.lon}&exclude=hourly&appid=b711fa2da92fd8f3924936e05e9a9ee1&units=metric&lang=hi`
+          );
+          let data1 = await response.json();
+          console.log(data1);
+          showDays(data1);
+        } catch (err) {
+          console.log(err);
+        }
+      }
+      daysWeather();
+    }
+
+    function showDays(data1) {
+      document.getElementById("days").innerHTML = "";
+      data1.daily.map(function (e) {
+        let div = document.createElement("div");
+
+        var day = document.createElement("p");
+        var seconds = e.dt;
+        var datee = new Date(seconds * 1000);
+
+        var time1 = datee.toString().split(" ").slice(0, 4).join(" ");
+        day.innerText = time1;
+
+        let img = document.createElement("img");
+        img.src = `http://openweathermap.org/img/wn/${e.weather[0].icon}@2x.png`;
+
+        let maxtemp = document.createElement("p");
+        maxtemp.innerHTML = `Max-Temp: ${e.temp.max}`;
+
+        let mintemp = document.createElement("p");
+        mintemp.innerText = `Min-Temp: ${e.temp.min}`;
+
+        div.append(day, img, maxtemp, mintemp);
+        document.getElementById("days").append(div);
+      });
+    }
+  }
+</script>
